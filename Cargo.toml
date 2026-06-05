@@ -1,0 +1,16 @@
+[package]
+name = "daemon-green"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-platform per-user background service manager (launchd gui-agent / systemd --user), login-session aware, sudo-free, SSH-safe."
+license = "MIT"
+repository = "https://github.com/mrap/daemon-green"
+
+[lib]
+name = "daemon_green"
+path = "src/lib.rs"
+
+# std-only: backends shell out to launchctl / systemctl. No external deps.
+[dependencies]
+
+[dev-dependencies]
