@@ -77,7 +77,15 @@ fn bootstrap_robust(label: &str) -> Result<()> {
         std::thread::sleep(Duration::from_millis(150));
     }
 
-    // 2. Retry plain bootstrap.
+    // 2. Self-heal a *disabled* label. macOS persists per-user disable state
+    //    (see `launchctl print-disabled gui/<uid>`); a disabled label cannot be
+    //    bootstrapped and surfaces as `Input/output error` (EIO-5) — and
+    //    `bootout` does NOT clear the disabled bit. Mirror the systemd path's
+    //    `enable --now` by best-effort `launchctl enable` before bootstrap.
+    //    Idempotent and harmless if already enabled.
+    let _ = launchctl(&["enable", &target]);
+
+    // 3. Retry plain bootstrap.
     let mut last = String::new();
     for _ in 0..3 {
         match launchctl(&["bootstrap", &domain, &plist_s]) {
