@@ -3,7 +3,7 @@ name = "daemon-green"
 version = "0.1.0"
 edition = "2021"
 description = "Cross-platform per-user background service manager (launchd gui-agent / systemd --user), login-session aware, sudo-free, SSH-safe."
-license = "MIT"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/mrap/daemon-green"
 
 [lib]
