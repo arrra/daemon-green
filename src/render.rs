@@ -4,6 +4,7 @@
 use crate::ServiceSpec;
 
 /// XML-escape a string for inclusion in a plist `<string>` value.
+#[cfg(any(test, target_os = "macos"))]
 fn xml(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
