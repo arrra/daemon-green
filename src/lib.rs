@@ -94,6 +94,9 @@ pub struct ServiceSpec {
     /// Where stdout+stderr go. If unset, a sensible per-user default is chosen
     /// (`~/Library/Logs/<label>.log` on macOS; the journal on Linux).
     pub log_path: Option<PathBuf>,
+    /// Bundle identifiers responsible for a macOS LaunchAgent's local-network
+    /// identity. Empty by default and ignored by the Linux renderer.
+    pub associated_bundle_identifiers: Vec<String>,
 }
 
 impl ServiceSpec {
@@ -108,6 +111,7 @@ impl ServiceSpec {
             keep_alive: true,
             run_at_load: true,
             log_path: None,
+            associated_bundle_identifiers: Vec::new(),
         }
     }
     /// The service label.
@@ -151,6 +155,15 @@ impl ServiceSpec {
     /// Override the combined stdout/stderr log path.
     pub fn log_path(mut self, p: impl Into<PathBuf>) -> Self {
         self.log_path = Some(p.into());
+        self
+    }
+    /// Set the macOS LaunchAgent's responsible bundle identifiers.
+    pub fn associated_bundle_identifiers<I, S>(mut self, ids: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.associated_bundle_identifiers = ids.into_iter().map(Into::into).collect();
         self
     }
 }

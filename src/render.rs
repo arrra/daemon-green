@@ -31,6 +31,14 @@ pub fn launchd_plist(spec: &ServiceSpec) -> String {
     }
     s.push_str("    </array>\n");
 
+    if !spec.associated_bundle_identifiers.is_empty() {
+        s.push_str("    <key>AssociatedBundleIdentifiers</key>\n    <array>\n");
+        for identifier in &spec.associated_bundle_identifiers {
+            s.push_str(&format!("        <string>{}</string>\n", xml(identifier)));
+        }
+        s.push_str("    </array>\n");
+    }
+
     if let Some(wd) = &spec.working_dir {
         s.push_str(&format!(
             "    <key>WorkingDirectory</key>\n    <string>{}</string>\n",
@@ -145,6 +153,37 @@ mod tests {
         let s = ServiceSpec::new("com.x", "/bin/x").env("Q", "a&b<c>");
         let p = launchd_plist(&s);
         assert!(p.contains("a&amp;b&lt;c&gt;"), "values must be XML-escaped; got:\n{p}");
+    }
+
+    #[test]
+    fn launchd_omits_empty_associated_bundle_identifiers() {
+        let p = launchd_plist(&spec());
+        assert!(
+            !p.contains("AssociatedBundleIdentifiers"),
+            "empty association must be omitted; got:\n{p}"
+        );
+    }
+
+    #[test]
+    fn launchd_renders_escaped_associated_bundle_identifiers() {
+        let s = spec().associated_bundle_identifiers(["com.example.owner", "com.x&<>"]);
+        let p = launchd_plist(&s);
+        let expected = "    <key>AssociatedBundleIdentifiers</key>\n    <array>\n        <string>com.example.owner</string>\n        <string>com.x&amp;&lt;&gt;</string>\n    </array>\n";
+        assert!(
+            p.contains(expected),
+            "association must render as an escaped array; got:\n{p}"
+        );
+    }
+
+    #[test]
+    fn systemd_ignores_associated_bundle_identifiers() {
+        let base = systemd_unit(&spec());
+        let associated =
+            systemd_unit(&spec().associated_bundle_identifiers(["com.example.owner"]));
+        assert_eq!(
+            base, associated,
+            "Linux output must not contain macOS-only fields"
+        );
     }
 
     #[test]
