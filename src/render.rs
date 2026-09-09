@@ -23,10 +23,16 @@ pub fn launchd_plist(spec: &ServiceSpec) -> String {
     s.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     s.push_str("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n");
     s.push_str("<plist version=\"1.0\">\n<dict>\n");
-    s.push_str(&format!("    <key>Label</key>\n    <string>{}</string>\n", xml(&spec.label)));
+    s.push_str(&format!(
+        "    <key>Label</key>\n    <string>{}</string>\n",
+        xml(&spec.label)
+    ));
 
     s.push_str("    <key>ProgramArguments</key>\n    <array>\n");
-    s.push_str(&format!("        <string>{}</string>\n", xml(&spec.program.to_string_lossy())));
+    s.push_str(&format!(
+        "        <string>{}</string>\n",
+        xml(&spec.program.to_string_lossy())
+    ));
     for a in &spec.args {
         s.push_str(&format!("        <string>{}</string>\n", xml(a)));
     }
@@ -71,8 +77,12 @@ pub fn launchd_plist(spec: &ServiceSpec) -> String {
 
     if let Some(lp) = &spec.log_path {
         let p = xml(&lp.to_string_lossy());
-        s.push_str(&format!("    <key>StandardOutPath</key>\n    <string>{p}</string>\n"));
-        s.push_str(&format!("    <key>StandardErrorPath</key>\n    <string>{p}</string>\n"));
+        s.push_str(&format!(
+            "    <key>StandardOutPath</key>\n    <string>{p}</string>\n"
+        ));
+        s.push_str(&format!(
+            "    <key>StandardErrorPath</key>\n    <string>{p}</string>\n"
+        ));
     }
     s.push_str("    <key>ProcessType</key>\n    <string>Background</string>\n");
     // NOTE: intentionally NO <key>SessionCreate</key>.
@@ -113,7 +123,9 @@ pub fn systemd_unit(spec: &ServiceSpec) -> String {
     }
     if let Some(lp) = &spec.log_path {
         let p = lp.to_string_lossy();
-        s.push_str(&format!("StandardOutput=append:{p}\nStandardError=append:{p}\n"));
+        s.push_str(&format!(
+            "StandardOutput=append:{p}\nStandardError=append:{p}\n"
+        ));
     }
     s.push('\n');
 
@@ -139,8 +151,14 @@ mod tests {
     #[test]
     fn launchd_has_no_sessioncreate_and_direct_program() {
         let p = launchd_plist(&spec());
-        assert!(!p.contains("SessionCreate"), "plist MUST NOT contain SessionCreate; got:\n{p}");
-        assert!(p.contains("<string>/usr/local/bin/exampled</string>"), "direct program; got:\n{p}");
+        assert!(
+            !p.contains("SessionCreate"),
+            "plist MUST NOT contain SessionCreate; got:\n{p}"
+        );
+        assert!(
+            p.contains("<string>/usr/local/bin/exampled</string>"),
+            "direct program; got:\n{p}"
+        );
         assert!(!p.contains("bash"), "no bash wrapper; got:\n{p}");
         assert!(p.contains("<key>Label</key>"));
         assert!(p.contains("<string>com.example.daemon</string>"));
@@ -154,7 +172,10 @@ mod tests {
     fn launchd_escapes_xml_in_values() {
         let s = ServiceSpec::new("com.x", "/bin/x").env("Q", "a&b<c>");
         let p = launchd_plist(&s);
-        assert!(p.contains("a&amp;b&lt;c&gt;"), "values must be XML-escaped; got:\n{p}");
+        assert!(
+            p.contains("a&amp;b&lt;c&gt;"),
+            "values must be XML-escaped; got:\n{p}"
+        );
     }
 
     #[test]
@@ -190,7 +211,10 @@ mod tests {
     #[test]
     fn systemd_has_execstart_restart_and_wantedby() {
         let u = systemd_unit(&spec());
-        assert!(u.contains("ExecStart=/usr/local/bin/exampled serve"), "got:\n{u}");
+        assert!(
+            u.contains("ExecStart=/usr/local/bin/exampled serve"),
+            "got:\n{u}"
+        );
         assert!(u.contains("Restart=always"), "got:\n{u}");
         assert!(u.contains("WantedBy=default.target"), "got:\n{u}");
         assert!(u.contains("Environment=EX_DIR=/home/x"), "got:\n{u}");

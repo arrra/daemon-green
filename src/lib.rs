@@ -31,9 +31,9 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::path::PathBuf;
 
-mod render; // pure renderers — always compiled + tested
 #[cfg(target_os = "macos")]
 mod launchd;
+mod render; // pure renderers — always compiled + tested
 #[cfg(target_os = "linux")]
 mod systemd;
 
@@ -224,21 +224,33 @@ struct Unsupported;
 #[cfg(not(any(target_os = "macos", target_os = "linux")))]
 impl ServiceManager for Unsupported {
     fn install(&self, _: &ServiceSpec) -> Result<()> {
-        Err(Error::Unsupported("daemon-green: unsupported platform".into()))
+        Err(Error::Unsupported(
+            "daemon-green: unsupported platform".into(),
+        ))
     }
     fn start(&self, _: &str) -> Result<()> {
-        Err(Error::Unsupported("daemon-green: unsupported platform".into()))
+        Err(Error::Unsupported(
+            "daemon-green: unsupported platform".into(),
+        ))
     }
     fn stop(&self, _: &str) -> Result<()> {
-        Err(Error::Unsupported("daemon-green: unsupported platform".into()))
+        Err(Error::Unsupported(
+            "daemon-green: unsupported platform".into(),
+        ))
     }
     fn restart(&self, _: &str) -> Result<()> {
-        Err(Error::Unsupported("daemon-green: unsupported platform".into()))
+        Err(Error::Unsupported(
+            "daemon-green: unsupported platform".into(),
+        ))
     }
     fn status(&self, _: &str) -> Result<ServiceStatus> {
-        Err(Error::Unsupported("daemon-green: unsupported platform".into()))
+        Err(Error::Unsupported(
+            "daemon-green: unsupported platform".into(),
+        ))
     }
     fn logs(&self, _: &str, _: usize) -> Result<String> {
-        Err(Error::Unsupported("daemon-green: unsupported platform".into()))
+        Err(Error::Unsupported(
+            "daemon-green: unsupported platform".into(),
+        ))
     }
 }
