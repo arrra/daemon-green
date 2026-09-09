@@ -8,6 +8,7 @@
 //! - **retry** the bootstrap, then fall back to `launchctl asuser` (both
 //!   sudo-free);
 //! - require an active GUI login (`gui/<uid>` exists); fail LOUD otherwise.
+//!
 //! Works over SSH whenever a desktop login is active (a desktop Mac always has one).
 
 use crate::render::launchd_plist;

@@ -17,6 +17,7 @@ fn xml(s: &str) -> String {
 ///   BLOCKS the login keychain (verified rc=36). A plain gui/<uid> agent inherits it.
 /// - The program is `ProgramArguments[0]` **directly** (absolute path), never a
 ///   `bash -c` wrapper, to keep the keychain-ACL identity clean.
+#[cfg(any(test, target_os = "macos"))]
 pub fn launchd_plist(spec: &ServiceSpec) -> String {
     let mut s = String::new();
     s.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -80,6 +81,7 @@ pub fn launchd_plist(spec: &ServiceSpec) -> String {
 }
 
 /// Render the Linux `systemd --user` `.service` unit.
+#[cfg(any(test, target_os = "linux"))]
 pub fn systemd_unit(spec: &ServiceSpec) -> String {
     let mut exec = spec.program.to_string_lossy().to_string();
     for a in &spec.args {
@@ -178,8 +180,7 @@ mod tests {
     #[test]
     fn systemd_ignores_associated_bundle_identifiers() {
         let base = systemd_unit(&spec());
-        let associated =
-            systemd_unit(&spec().associated_bundle_identifiers(["com.example.owner"]));
+        let associated = systemd_unit(&spec().associated_bundle_identifiers(["com.example.owner"]));
         assert_eq!(
             base, associated,
             "Linux output must not contain macOS-only fields"
