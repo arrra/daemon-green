@@ -65,7 +65,15 @@ pub fn launchd_plist(spec: &ServiceSpec) -> String {
         s.push_str(&format!("    <key>StandardOutPath</key>\n    <string>{p}</string>\n"));
         s.push_str(&format!("    <key>StandardErrorPath</key>\n    <string>{p}</string>\n"));
     }
-    s.push_str("    <key>ProcessType</key>\n    <string>Background</string>\n");
+    // ProcessType only when the caller asked for one. Omitting the key is
+    // launchd's `Standard`; the old unconditional `Background` pinned every
+    // child to Apple-silicon efficiency cores (10x slower CPU-bound work).
+    if let Some(pt) = spec.process_type {
+        s.push_str(&format!(
+            "    <key>ProcessType</key>\n    <string>{}</string>\n",
+            pt.as_launchd_str()
+        ));
+    }
     // NOTE: intentionally NO <key>SessionCreate</key>.
     s.push_str("</dict>\n</plist>\n");
     s
@@ -163,5 +171,21 @@ mod tests {
         assert!(!systemd_unit(&s).contains("Restart=always"));
         let p = launchd_plist(&s);
         assert!(!p.contains("KeepAlive"));
+    }
+
+    #[test]
+    fn launchd_omits_processtype_by_default() {
+        let p = launchd_plist(&spec());
+        assert!(!p.contains("ProcessType"), "default must omit ProcessType (= Standard):\n{p}");
+    }
+
+    #[test]
+    fn launchd_renders_requested_processtype() {
+        use crate::ProcessType;
+        let bg = launchd_plist(&spec().process_type(ProcessType::Background));
+        assert!(bg.contains("<key>ProcessType</key>\n    <string>Background</string>"), "{bg}");
+        let st = launchd_plist(&spec().process_type(ProcessType::Standard));
+        assert!(st.contains("<key>ProcessType</key>\n    <string>Standard</string>"), "{st}");
+        assert_eq!(st.matches("ProcessType").count(), 1);
     }
 }

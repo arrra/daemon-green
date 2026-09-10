@@ -94,6 +94,39 @@ pub struct ServiceSpec {
     /// Where stdout+stderr go. If unset, a sensible per-user default is chosen
     /// (`~/Library/Logs/<label>.log` on macOS; the journal on Linux).
     pub log_path: Option<PathBuf>,
+    /// launchd `ProcessType`. `None` (the default) omits the key, which launchd
+    /// treats as `Standard`. Before this field existed the plist hardcoded
+    /// `Background`, which on Apple silicon confines the whole process tree to
+    /// the efficiency cores — a measured 10x slowdown for CPU-bound children
+    /// (cargo builds under a coding-agent daemon). Set
+    /// [`ProcessType::Background`] explicitly if you want the old behaviour.
+    /// Ignored by the systemd backend.
+    pub process_type: Option<ProcessType>,
+}
+
+/// launchd `ProcessType` values (see `man launchd.plist`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProcessType {
+    /// Default scheduling; same as omitting the key.
+    Standard,
+    /// Resource-throttled; on Apple silicon the tree runs on efficiency cores.
+    Background,
+    /// UI-latency priority.
+    Interactive,
+    /// Adaptive between Interactive and Background based on demand.
+    Adaptive,
+}
+
+impl ProcessType {
+    /// The exact string launchd expects in the plist.
+    pub fn as_launchd_str(self) -> &'static str {
+        match self {
+            ProcessType::Standard => "Standard",
+            ProcessType::Background => "Background",
+            ProcessType::Interactive => "Interactive",
+            ProcessType::Adaptive => "Adaptive",
+        }
+    }
 }
 
 impl ServiceSpec {
@@ -108,7 +141,13 @@ impl ServiceSpec {
             keep_alive: true,
             run_at_load: true,
             log_path: None,
+            process_type: None,
         }
+    }
+    /// Set the launchd `ProcessType` (macOS only; ignored on Linux).
+    pub fn process_type(mut self, pt: ProcessType) -> Self {
+        self.process_type = Some(pt);
+        self
     }
     /// The service label.
     pub fn label(&self) -> &str {
